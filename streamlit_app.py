@@ -52,9 +52,6 @@ def load_data():
 df = load_data()
 
 
-
-
-
 # ---------- Features & Target ----------
 target = 'Diabetes_Prediabetes'
 features = [col for col in df.columns if col != target]
@@ -63,12 +60,15 @@ df = df[features + [target]].dropna()
 X = df[features]
 y = df[target]
 
-# ---------- Detect Feature Types ----------
-categorical_features = df[features].select_dtypes(include=['object', 'category']).columns.tolist()
-numerical_features = df[features].select_dtypes(include=['int64', 'float64']).columns.tolist()
+# ---------- Identify Feature Types ----------
+categorical_features = []
+numerical_features = []
 
-
-
+for col in features:
+    if df[col].dtype == 'object' or df[col].nunique() < 10:  # Assuming categorical if <10 unique values
+        categorical_features.append(col)
+    else:
+        numerical_features.append(col)
 
 # ---------- Preprocessing ----------
 preprocessor = ColumnTransformer([
@@ -88,10 +88,8 @@ model.fit(X_train, y_train)
 # ---------- Feature Importance ----------
 xgb_model = model.named_steps['xgb']
 encoder = model.named_steps['prep'].named_transformers_['cat']
-cat_features = encoder.get_feature_names_out(categorical_features).tolist()
-feature_names = cat_features + numerical_features
+feature_names = encoder.get_feature_names_out(categorical_features).tolist() + numerical_features
 importances = xgb_model.feature_importances_
-
 importance_df = pd.DataFrame({
     'Feature': feature_names,
     'Importance': importances
@@ -111,48 +109,62 @@ odds_df = pd.DataFrame({
     'Odds Ratio': odds_ratios
 }).sort_values(by='Odds Ratio', ascending=False)
 
-filtered_odds_df = odds_df[~odds_df['Feature'].str.contains("race")]
-
 # ---------- Sidebar User Input ----------
 st.sidebar.header("📝 Input Individual Data")
 
-user_input_data = {}
+user_input = {}
 for col in features:
-    if df[col].dtype == 'object':
-        options = df[col].dropna().unique().tolist()
-        user_input_data[col] = st.sidebar.selectbox(col, options)
+    if col in categorical_features:
+        unique_values = df[col].unique()
+        if len(unique_values) > 10:  # If too many unique values, use number input
+            min_val = df[col].min()
+            max_val = df[col].max()
+            default_val = (min_val + max_val) / 2
+            user_input[col] = st.sidebar.number_input(
+                f"{col} ({min_val:.1f}-{max_val:.1f})",
+                min_value=min_val,
+                max_value=max_val,
+                value=default_val
+            )
+        else:
+            user_input[col] = st.sidebar.selectbox(col, unique_values)
     else:
-        min_val = float(df[col].min())
-        max_val = float(df[col].max())
-        default_val = float(df[col].mean())
-        user_input_data[col] = st.sidebar.number_input(f"{col} ({min_val:.2f} - {max_val:.2f})", min_value=min_val, max_value=max_val, value=default_val)
-
-user_input = pd.DataFrame([user_input_data])
+        min_val = df[col].min()
+        max_val = df[col].max()
+        default_val = (min_val + max_val) / 2
+        user_input[col] = st.sidebar.number_input(
+            f"{col} ({min_val:.1f}-{max_val:.1f})",
+            min_value=min_val,
+            max_value=max_val,
+            value=default_val
+        )
 
 # ---------- Prediction ----------
-prediction = model.predict(user_input)[0]
-probability = model.predict_proba(user_input)[0][1]
+user_df = pd.DataFrame([user_input])
+
+prediction = model.predict(user_df)[0]
+probability = model.predict_proba(user_df)[0][1]
 odds_value = probability / (1 - probability)
 
 # ---------- Display Result ----------
 if prediction == 1:
     st.error(f"""
-        ⚠️ **Prediction: At Risk for Prediabetes/Diabetes**
+        ⚠️ **Prediction: Diabetes/Prediabetes**
 
         🧮 **Probability:** {probability:.2%}  
         🎲 **Odds:** {odds_value:.2f}
     """)
 else:
     st.success(f"""
-        ✅ **Prediction: Not at Risk**
+        ✅ **Prediction: No Diabetes/Prediabetes**
 
         🧮 **Probability:** {probability:.2%}  
         🎲 **Odds:** {odds_value:.2f}
     """)
 
 # ---------- Show Tables ----------
-st.subheader("📊 Odds Ratios (Logistic Regression) (Excluding Race)")
-st.dataframe(filtered_odds_df)
+st.subheader("📊 Odds Ratios for Diabetes/Prediabetes (Logistic Regression)")
+st.dataframe(odds_df)
 
 st.subheader("💡 Feature Importances (XGBoost)")
 st.dataframe(importance_df)
@@ -160,50 +172,21 @@ st.dataframe(importance_df)
 # ---------- Plot Feature Importances ----------
 st.subheader("📈 Bar Chart: Feature Importances")
 fig, ax = plt.subplots()
-sns.barplot(x='Importance', y='Feature', data=importance_df, ax=ax, color="#2196f3")
+sns.barplot(x='Importance', y='Feature', data=importance_df, ax=ax)
+ax.set_title("Feature Importance for Diabetes/Prediabetes Prediction")
 st.pyplot(fig)
-
-# ---------- Quartile Odds Ratio for WWI ----------
-if 'WWI' in df.columns:
-    st.subheader("📉 Odds Ratios by WWI Quartiles")
-    df_wwi = df[['WWI', target]].copy()
-    df_wwi['WWI_quartile'] = pd.qcut(df_wwi['WWI'], 4, labels=['Q1', 'Q2', 'Q3', 'Q4'])
-
-    X_q = pd.get_dummies(df_wwi['WWI_quartile'], drop_first=True)
-    X_q = sm.add_constant(X_q).astype(float)
-    y_q = df_wwi[target].astype(float)
-
-    model_q = sm.Logit(y_q, X_q).fit(disp=False)
-    ors = np.exp(model_q.params)
-    ci = model_q.conf_int()
-    ci.columns = ['2.5%', '97.5%']
-    ci = np.exp(ci)
-
-    or_df = pd.DataFrame({
-        'Quartile': ors.index,
-        'Odds Ratio': ors.values,
-        'CI Lower': ci['2.5%'],
-        'CI Upper': ci['97.5%'],
-        'p-value': model_q.pvalues
-    }).query("Quartile != 'const'")
-
-    st.dataframe(or_df.set_index('Quartile').style.format("{:.2f}"))
-
-    fig3, ax3 = plt.subplots()
-    sns.pointplot(data=or_df, x='Quartile', y='Odds Ratio', join=False, capsize=0.2, errwidth=1.5, color="#0d47a1")
-    ax3.axhline(1, linestyle='--', color='gray')
-    ax3.set_title("Odds Ratios by WWI Quartiles")
-    st.pyplot(fig3)
 
 # ---------- Summary ----------
 with st.expander("📋 Data Summary"):
     st.write(df.describe())
 
-st.subheader("🎯 Distribution of Diabetes_Prediabetes")
+st.subheader("🎯 Diabetes/Prediabetes Distribution")
 fig2, ax2 = plt.subplots()
-df[target].value_counts().plot.pie(
-    autopct='%1.1f%%', labels=['Not at Risk', 'At Risk'], ax=ax2, colors=["#90caf9", "#f44336"])
+df['Diabetes_Prediabetes'].value_counts().plot.pie(
+    autopct='%1.1f%%', labels=['No Diabetes/Prediabetes', 'Diabetes/Prediabetes'], 
+    ax=ax2, colors=["#81c784", "#e57373"])
 ax2.set_ylabel("")
+ax2.set_title("Diabetes/Prediabetes Distribution")
 st.pyplot(fig2)
 
 with st.expander("🔍 Sample Data (First 10 Rows)"):
