@@ -148,27 +148,26 @@ triglycerides = st.sidebar.number_input("Triglycerides (30 - 600)", min_value=30
 
 
 
-# Categorical Inputs with New Divisions...............((((((=
+
+# Categorical Inputs with New Divisions
 race_ethnicity = st.sidebar.selectbox("Race/Ethnicity", race_options)
 marital_status = st.sidebar.selectbox("Marital Status", marital_status_options)
 smoked_100_cigarettes = st.sidebar.selectbox("Smoked at least 100 Cigarettes", smoke_options)
 ever_drank_alcohol = st.sidebar.selectbox("Alcohol Consumption", alcohol_options)
 
-
-
-
 # Create User Input DataFrame
 user_input = pd.DataFrame([{
-    
-    'eGDR': egdr,
-    'Age': age,    
+    'Age': age,
     'BMI': bmi,
     'Total_Cholesterol': total_cholesterol,
     'Triglycerides': triglycerides,
+    'eGDR': egdr,
     'Race_Ethnicity': race_ethnicity,
     'Marital_Status': marital_status,
+    'Education_Level': education_level,
     'Smoked_100_Cigarettes': smoked_100_cigarettes,
     'Ever_Drank_Alcohol': ever_drank_alcohol,
+    'Hyperlipidemia': hyperlipidemia
 }])
 
 
