@@ -97,45 +97,75 @@ odds_df = pd.DataFrame({
     'Odds Ratio': odds_ratios
 }).sort_values(by='Odds Ratio', ascending=False)
 
+
+
+
+
+
+
+
+# ---------- Sidebar User Input ----------
 # ---------- Sidebar User Input ----------
 st.sidebar.header("📝 Input Individual Data")
 
-# Define Sidebar Inputs
-race_options = sorted(df['Race_Ethnicity'].unique())
-education_options = sorted(df['Education_Level'].unique())
-marital_options = sorted(df['Marital_Status'].unique())
-smoke_options = sorted(df['Smoked_100_Cigarettes'].unique())
-alcohol_options = sorted(df['Ever_Drank_Alcohol'].unique())
-hyperlipidemia_options = sorted(df['Hyperlipidemia'].unique())
+# Fixed Category Options (Based on Your Divisions)
+race_options = [
+    "Mexican American", "Other Hispanic", "Non-Hispanic White",
+    "Non-Hispanic Black", "Non-Hispanic Asian", "Other Race - Including Multi-Racial"
+]
 
-# Numerical Inputs
-Age = st.sidebar.number_input("Age", min_value=int(df['Age'].min()), max_value=int(df['Age'].max()), value=int(df['Age'].median()))
-BMI = st.sidebar.number_input("BMI", min_value=float(df['BMI'].min()), max_value=float(df['BMI'].max()), value=float(df['BMI'].median()))
-Total_Cholesterol = st.sidebar.number_input("Total Cholesterol", min_value=float(df['Total_Cholesterol'].min()), max_value=float(df['Total_Cholesterol'].max()), value=float(df['Total_Cholesterol'].median()))
-Triglycerides = st.sidebar.number_input("Triglycerides", min_value=float(df['Triglycerides'].min()), max_value=float(df['Triglycerides'].max()), value=float(df['Triglycerides'].median()))
-eGDR = st.sidebar.number_input("eGDR", min_value=float(df['eGDR'].min()), max_value=float(df['eGDR'].max()), value=float(df['eGDR'].median()))
+marital_status_options = [
+    "Living alone", "Married/living with partner"
+]
 
-# Categorical Inputs
-Race_Ethnicity = st.sidebar.selectbox("Race/Ethnicity", race_options)
-Education_Level = st.sidebar.selectbox("Education Level", education_options)
-Marital_Status = st.sidebar.selectbox("Marital Status", marital_options)
-Smoked_100_Cigarettes = st.sidebar.selectbox("Smoked 100+ Cigarettes", smoke_options)
-Ever_Drank_Alcohol = st.sidebar.selectbox("Ever Drank Alcohol", alcohol_options)
-Hyperlipidemia = st.sidebar.selectbox("Hyperlipidemia", hyperlipidemia_options)
+education_level_options = [
+    "Less than 9th grade", "9-11th grade", "High school graduate or equivalent",
+    "Some college or AA degree", "College graduate or above"
+]
 
+smoke_options = [
+    "Never smoker", "Former smoker", "Current smoker",
+    "Current light smoker", "Current heavy smoker"
+]
+
+alcohol_options = [
+    "Never drinker", "Former drinker", "Light-to-moderate", "Heavy drinker"
+]
+
+# Numerical Inputs (Fixed Range like previous style)
+age = st.sidebar.number_input("Age (18 - 80)", min_value=18, max_value=80, value=30)
+bmi = st.sidebar.number_input("BMI (14.6 - 82.0)", min_value=14.6, max_value=82.0, value=25.0)
+total_cholesterol = st.sidebar.number_input("Total Cholesterol (80 - 400)", min_value=80.0, max_value=400.0, value=200.0)
+triglycerides = st.sidebar.number_input("Triglycerides (30 - 600)", min_value=30.0, max_value=600.0, value=150.0)
+egdr = st.sidebar.number_input("eGDR (2 - 25)", min_value=2.0, max_value=25.0, value=10.0)
+
+# Categorical Inputs with New Divisions
+race_ethnicity = st.sidebar.selectbox("Race/Ethnicity", race_options)
+marital_status = st.sidebar.selectbox("Marital Status", marital_status_options)
+education_level = st.sidebar.selectbox("Education Level", education_level_options)
+smoked_100_cigarettes = st.sidebar.selectbox("Smoked at least 100 Cigarettes", smoke_options)
+ever_drank_alcohol = st.sidebar.selectbox("Alcohol Consumption", alcohol_options)
+hyperlipidemia = st.sidebar.selectbox("Hyperlipidemia", ["Yes", "No"])
+
+# Create User Input DataFrame
 user_input = pd.DataFrame([{
-    'Age': Age,
-    'BMI': BMI,
-    'Total_Cholesterol': Total_Cholesterol,
-    'Triglycerides': Triglycerides,
-    'eGDR': eGDR,
-    'Race_Ethnicity': Race_Ethnicity,
-    'Education_Level': Education_Level,
-    'Marital_Status': Marital_Status,
-    'Smoked_100_Cigarettes': Smoked_100_Cigarettes,
-    'Ever_Drank_Alcohol': Ever_Drank_Alcohol,
-    'Hyperlipidemia': Hyperlipidemia
+    'Age': age,
+    'BMI': bmi,
+    'Total_Cholesterol': total_cholesterol,
+    'Triglycerides': triglycerides,
+    'eGDR': egdr,
+    'Race_Ethnicity': race_ethnicity,
+    'Marital_Status': marital_status,
+    'Education_Level': education_level,
+    'Smoked_100_Cigarettes': smoked_100_cigarettes,
+    'Ever_Drank_Alcohol': ever_drank_alcohol,
+    'Hyperlipidemia': hyperlipidemia
 }])
+
+
+
+
+
 
 # ---------- Prediction ----------
 prediction = model.predict(user_input)[0]
