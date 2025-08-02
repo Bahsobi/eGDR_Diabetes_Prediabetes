@@ -51,8 +51,8 @@ df = load_data()
 target = 'Diabetes_Prediabetes'
 features = [col for col in df.columns if col != target]
 
-categorical_features = ['Race_Ethnicity', 'Education_Level', 'Marital_Status',
-                        'Smoked_100_Cigarettes', 'Ever_Drank_Alcohol', 'Hyperlipidemia']
+categorical_features = ['Race_Ethnicity', 'Marital_Status',
+                        'Smoked_100_Cigarettes', 'Ever_Drank_Alcohol']
 numerical_features = ['Age', 'BMI', 'Total_Cholesterol', 'Triglycerides', 'eGDR']
 
 X = df[features]
@@ -164,10 +164,8 @@ user_input = pd.DataFrame([{
     'eGDR': egdr,
     'Race_Ethnicity': race_ethnicity,
     'Marital_Status': marital_status,
-    'Education_Level': education_level,
     'Smoked_100_Cigarettes': smoked_100_cigarettes,
     'Ever_Drank_Alcohol': ever_drank_alcohol,
-    'Hyperlipidemia': hyperlipidemia
 }])
 
 
