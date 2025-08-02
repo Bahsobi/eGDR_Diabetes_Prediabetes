@@ -39,13 +39,21 @@ st.markdown(
 st.title('🤖 Machine Learning Models APP for Predicting Prediabetes & Diabetes Risk in Women')
 st.info('Predict the **Prediabetes & Diabetes** based on health data using XGBoost and Logistic Regression.')
 
+
+
+
+
 # ---------- Load Data ----------
 @st.cache_data
 def load_data():
-    url = "https://github.com/Bahsobi/WWI_project/raw/refs/heads/main/encodeddata.xlsx"
+    url = "https://github.com/Bahsobi/eGDR_Diabetes_Prediabetes/raw/refs/heads/main/FEATURE%20FINAL.xlsx"
     return pd.read_excel(url)
 
 df = load_data()
+
+
+
+
 
 # ---------- Features & Target ----------
 target = 'Diabetes_Prediabetes'
@@ -58,6 +66,9 @@ y = df[target]
 # ---------- Detect Feature Types ----------
 categorical_features = df[features].select_dtypes(include=['object', 'category']).columns.tolist()
 numerical_features = df[features].select_dtypes(include=['int64', 'float64']).columns.tolist()
+
+
+
 
 # ---------- Preprocessing ----------
 preprocessor = ColumnTransformer([
