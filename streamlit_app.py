@@ -42,7 +42,7 @@ st.info('Predict the **Diabetes/Prediabetes** status based on health data using 
 # ---------- Load Data ----------
 @st.cache_data
 def load_data():
-    url = "https://github.com/Bahsobi/WWI_project/raw/refs/heads/main/FEATURE%20FINAL.xlsx"
+    url = "https://github.com/Bahsobi/eGDR_Diabetes_Prediabetes/raw/refs/heads/main/FEATURE%20FINAL.xlsx"
     return pd.read_excel(url)
 
 df = load_data()
