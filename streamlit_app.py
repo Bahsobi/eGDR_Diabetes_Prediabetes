@@ -11,15 +11,15 @@ from sklearn.linear_model import LogisticRegression
 import seaborn as sns
 import statsmodels.api as sm
 
-# ---------- Custom Styling ----------
+# ---------- Custom Styling (Blue Theme) ----------
 st.markdown(
     """
     <style>
         .stApp {
-            background-color: #E3F2FD;  /* Light Blue */
+            background-color: #e0f7fa;  /* Light Blue */
         }
         .stSidebar {
-            background-color: #BBDEFB;  /* Deeper Blue */
+            background-color: #b2ebf2;  /* Sidebar Blue */
         }
     </style>
     """,
@@ -36,232 +36,182 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-st.title('🤖 Machine Learning Models APP for Predicting Prediabetes & Diabetes Risk in Women')
-st.info('Predict the **Prediabetes & Diabetes** based on health data using XGBoost and Logistic Regression.')
-
-
-
-
+st.title('🤖🩺 Machine Learning APP for Predicting Diabetes & Prediabetes Risk')
+st.info('Predict the **Diabetes/Prediabetes** status based on health data using XGBoost and Logistic Regression.')
 
 # ---------- Load Data ----------
 @st.cache_data
 def load_data():
-    url = "https://github.com/Bahsobi/eGDR_Diabetes_Prediabetes/raw/refs/heads/main/FEATURE%20FINAL.xlsx"
+    url = "https://github.com/Bahsobi/WWI_project/raw/refs/heads/main/FEATURE%20FINAL.xlsx"
     return pd.read_excel(url)
 
 df = load_data()
 
-
-
-
-
----------- Define Feature Types ----------
-Categorical features with their mappings
-categorical_features = {
-'Race_Ethnicity': {
-1: 'Non-Hispanic White',
-2: 'Non-Hispanic Black',
-3: 'Mexican American',
-4: 'Other Hispanic',
-5: 'Non-Hispanic Asian',
-6: 'Other Race',
-7: 'Multi-Racial'
-},
-'Education_Level': {
-1: 'Less than 9th grade',
-2: '9-11th grade',
-3: 'High school graduate',
-4: 'Some college or AA degree',
-5: 'College graduate or above'
-},
-'Marital_Status': {
-1: 'Married',
-2: 'Not married'
-},
-'Smoked_100_Cigarettes': {
-1: 'Yes',
-2: 'No'
-},
-'Ever_Drank_Alcohol': {
-1: 'Yes',
-2: 'No'
-},
-'Hyperlipidemia': {
-0: 'No',
-1: 'Yes'
-}
-}
-
-Numerical features
-numerical_features = ['Age', 'BMI', 'Total_Cholesterol', 'Triglycerides', 'eGDR']
-
-Target variable
+# ---------- Features & Target ----------
 target = 'Diabetes_Prediabetes'
+features = [col for col in df.columns if col != target]
 
-Apply categorical mappings
-for col, mapping in categorical_features.items():
-df[col] = df[col].map(mapping)
-
----------- Features & Target ----------
-features = list(categorical_features.keys()) + numerical_features
-df = df[features + [target]].dropna()
+categorical_features = ['Race_Ethnicity', 'Education_Level', 'Marital_Status',
+                        'Smoked_100_Cigarettes', 'Ever_Drank_Alcohol', 'Hyperlipidemia']
+numerical_features = ['Age', 'BMI', 'Total_Cholesterol', 'Triglycerides', 'eGDR']
 
 X = df[features]
 y = df[target]
 
----------- Preprocessing ----------
-cat_features = list(categorical_features.keys())
-num_features = numerical_features
-
+# ---------- Preprocessing ----------
 preprocessor = ColumnTransformer([
-('cat', OneHotEncoder(handle_unknown='ignore'), cat_features),
-('num', StandardScaler(), num_features)
+    ('cat', OneHotEncoder(handle_unknown='ignore'), categorical_features),
+    ('num', StandardScaler(), numerical_features)
 ])
 
----------- XGBoost Pipeline ----------
+# ---------- XGBoost Pipeline ----------
 model = Pipeline([
-('prep', preprocessor),
-('xgb', XGBClassifier(use_label_encoder=False, eval_metric='logloss', random_state=42))
+    ('prep', preprocessor),
+    ('xgb', XGBClassifier(use_label_encoder=False, eval_metric='logloss', random_state=42))
 ])
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=42)
 model.fit(X_train, y_train)
 
----------- Feature Importance ----------
+# ---------- Feature Importance ----------
 xgb_model = model.named_steps['xgb']
 encoder = model.named_steps['prep'].named_transformers_['cat']
-feature_names = encoder.get_feature_names_out(cat_features).tolist() + num_features
+feature_names = encoder.get_feature_names_out(categorical_features).tolist() + numerical_features
 importances = xgb_model.feature_importances_
 importance_df = pd.DataFrame({
-'Feature': feature_names,
-'Importance': importances
+    'Feature': feature_names,
+    'Importance': importances
 }).sort_values(by='Importance', ascending=False)
 
----------- Logistic Regression for Odds Ratio ----------
+# ---------- Logistic Regression for Odds Ratio ----------
 odds_pipeline = Pipeline([
-('prep', preprocessor),
-('logreg', LogisticRegression(max_iter=1000))
+    ('prep', preprocessor),
+    ('logreg', LogisticRegression(max_iter=1000))
 ])
 odds_pipeline.fit(X_train, y_train)
 log_model = odds_pipeline.named_steps['logreg']
 odds_ratios = np.exp(log_model.coef_[0])
 
 odds_df = pd.DataFrame({
-'Feature': feature_names,
-'Odds Ratio': odds_ratios
+    'Feature': feature_names,
+    'Odds Ratio': odds_ratios
 }).sort_values(by='Odds Ratio', ascending=False)
 
----------- Sidebar User Input ----------
+# ---------- Sidebar User Input ----------
 st.sidebar.header("📝 Input Individual Data")
 
-Dynamically create input widgets based on feature types
-user_input = {}
-for feature in features:
-if feature in categorical_features:
-options = list(categorical_features[feature].values())
-default_value = options[0]
-user_input[feature] = st.sidebar.selectbox(feature, options, index=0)
-else:
-min_val = float(df[feature].min())
-max_val = float(df[feature].max())
-default_val = float(df[feature].median())
-user_input[feature] = st.sidebar.number_input(
-f"{feature} ({min_val:.1f}-{max_val:.1f})",
-min_value=min_val,
-max_value=max_val,
-value=default_val
-)
+# Define Sidebar Inputs
+race_options = sorted(df['Race_Ethnicity'].unique())
+education_options = sorted(df['Education_Level'].unique())
+marital_options = sorted(df['Marital_Status'].unique())
+smoke_options = sorted(df['Smoked_100_Cigarettes'].unique())
+alcohol_options = sorted(df['Ever_Drank_Alcohol'].unique())
+hyperlipidemia_options = sorted(df['Hyperlipidemia'].unique())
 
----------- Prediction ----------
-user_df = pd.DataFrame([user_input])
+# Numerical Inputs
+Age = st.sidebar.number_input("Age", min_value=int(df['Age'].min()), max_value=int(df['Age'].max()), value=int(df['Age'].median()))
+BMI = st.sidebar.number_input("BMI", min_value=float(df['BMI'].min()), max_value=float(df['BMI'].max()), value=float(df['BMI'].median()))
+Total_Cholesterol = st.sidebar.number_input("Total Cholesterol", min_value=float(df['Total_Cholesterol'].min()), max_value=float(df['Total_Cholesterol'].max()), value=float(df['Total_Cholesterol'].median()))
+Triglycerides = st.sidebar.number_input("Triglycerides", min_value=float(df['Triglycerides'].min()), max_value=float(df['Triglycerides'].max()), value=float(df['Triglycerides'].median()))
+eGDR = st.sidebar.number_input("eGDR", min_value=float(df['eGDR'].min()), max_value=float(df['eGDR'].max()), value=float(df['eGDR'].median()))
 
-prediction = model.predict(user_df)[0]
-probability = model.predict_proba(user_df)[0][1]
+# Categorical Inputs
+Race_Ethnicity = st.sidebar.selectbox("Race/Ethnicity", race_options)
+Education_Level = st.sidebar.selectbox("Education Level", education_options)
+Marital_Status = st.sidebar.selectbox("Marital Status", marital_options)
+Smoked_100_Cigarettes = st.sidebar.selectbox("Smoked 100+ Cigarettes", smoke_options)
+Ever_Drank_Alcohol = st.sidebar.selectbox("Ever Drank Alcohol", alcohol_options)
+Hyperlipidemia = st.sidebar.selectbox("Hyperlipidemia", hyperlipidemia_options)
+
+user_input = pd.DataFrame([{
+    'Age': Age,
+    'BMI': BMI,
+    'Total_Cholesterol': Total_Cholesterol,
+    'Triglycerides': Triglycerides,
+    'eGDR': eGDR,
+    'Race_Ethnicity': Race_Ethnicity,
+    'Education_Level': Education_Level,
+    'Marital_Status': Marital_Status,
+    'Smoked_100_Cigarettes': Smoked_100_Cigarettes,
+    'Ever_Drank_Alcohol': Ever_Drank_Alcohol,
+    'Hyperlipidemia': Hyperlipidemia
+}])
+
+# ---------- Prediction ----------
+prediction = model.predict(user_input)[0]
+probability = model.predict_proba(user_input)[0][1]
 odds_value = probability / (1 - probability)
 
----------- Display Result ----------
+# ---------- Display Result ----------
 if prediction == 1:
-st.error(f"""
-⚠️ Prediction: Diabetes/Prediabetes
+    st.error(f"""
+        ⚠️ **Prediction: Diabetes/Prediabetes**
 
-text
-    🧮 **Probability:** {probability:.2%}  
-    🎲 **Odds:** {odds_value:.2f}
-""")
+        🧮 **Probability:** {probability:.2%}  
+        🎲 **Odds:** {odds_value:.2f}
+    """)
 else:
-st.success(f"""
-✅ Prediction: No Diabetes/Prediabetes
+    st.success(f"""
+        ✅ **Prediction: No Diabetes/Prediabetes**
 
-text
-    🧮 **Probability:** {probability:.2%}  
-    🎲 **Odds:** {odds_value:.2f}
-""")
----------- Show Tables ----------
+        🧮 **Probability:** {probability:.2%}  
+        🎲 **Odds:** {odds_value:.2f}
+    """)
+
+# ---------- Show Tables ----------
 st.subheader("📊 Odds Ratios for Diabetes/Prediabetes (Logistic Regression)")
 st.dataframe(odds_df)
 
 st.subheader("💡 Feature Importances (XGBoost)")
 st.dataframe(importance_df)
 
----------- Plot Feature Importances ----------
+# ---------- Plot Feature Importances ----------
 st.subheader("📈 Bar Chart: Feature Importances")
-fig, ax = plt.subplots(figsize=(10, 6))
-sns.barplot(x='Importance', y='Feature', data=importance_df.head(10), ax=ax)
-ax.set_title("Top 10 Most Important Features for Diabetes/Prediabetes Prediction")
+fig, ax = plt.subplots()
+sns.barplot(x='Importance', y='Feature', data=importance_df, ax=ax)
 st.pyplot(fig)
 
----------- Target Distribution ----------
+# ---------- Quartile Odds Ratio for eGDR ----------
+st.subheader("📉 Odds Ratios for Diabetes/Prediabetes by eGDR Quartiles")
+df_egdr = df[['eGDR', target]].copy()
+df_egdr['eGDR_quartile'] = pd.qcut(df_egdr['eGDR'], 4, labels=['Q1', 'Q2', 'Q3', 'Q4'])
+
+X_q = pd.get_dummies(df_egdr['eGDR_quartile'], drop_first=True)
+X_q = sm.add_constant(X_q).astype(float)
+y_q = df_egdr[target].astype(float)
+
+model_q = sm.Logit(y_q, X_q).fit(disp=False)
+ors = np.exp(model_q.params)
+ci = model_q.conf_int()
+ci.columns = ['2.5%', '97.5%']
+ci = np.exp(ci)
+
+or_df = pd.DataFrame({
+    'Quartile': ors.index,
+    'Odds Ratio': ors.values,
+    'CI Lower': ci['2.5%'],
+    'CI Upper': ci['97.5%'],
+    'p-value': model_q.pvalues
+}).query("Quartile != 'const'")
+
+st.dataframe(or_df.set_index('Quartile').style.format("{:.2f}"))
+
+fig3, ax3 = plt.subplots()
+sns.pointplot(data=or_df, x='Quartile', y='Odds Ratio', join=False, capsize=0.2, errwidth=1.5)
+ax3.axhline(1, linestyle='--', color='gray')
+ax3.set_title("Odds Ratios for Diabetes/Prediabetes by eGDR Quartiles")
+st.pyplot(fig3)
+
+# ---------- Summary ----------
+with st.expander("📋 Data Summary"):
+    st.write(df.describe())
+
 st.subheader("🎯 Diabetes/Prediabetes Distribution")
 fig2, ax2 = plt.subplots()
 df[target].value_counts().plot.pie(
-autopct='%1.1f%%',
-labels=['No Diabetes/Prediabetes', 'Diabetes/Prediabetes'],
-ax=ax2,
-colors=["#81c784", "#e57373"])
+    autopct='%1.1f%%', labels=['No Diabetes/Prediabetes', 'Diabetes/Prediabetes'], ax=ax2, colors=["#81c784", "#e57373"])
 ax2.set_ylabel("")
-ax2.set_title("Distribution of Diabetes/Prediabetes in Dataset")
 st.pyplot(fig2)
 
----------- Summary ----------
-with st.expander("📋 Data Summary"):
-st.write(df.describe())
-
 with st.expander("🔍 Sample Data (First 10 Rows)"):
-st.dataframe(df.head(10))
-
----------- Correlation Heatmap ----------
-st.subheader("🌡️ Correlation Heatmap")
-numerical_df = df[numerical_features + [target]]
-corr = numerical_df.corr()
-fig3, ax3 = plt.subplots(figsize=(10, 8))
-sns.heatmap(corr, annot=True, cmap='coolwarm', center=0, ax=ax3)
-ax3.set_title("Correlation Between Numerical Features and Diabetes/Prediabetes")
-st.pyplot(fig3)
-
----------- Age Distribution by Diabetes Status ----------
-st.subheader("📊 Age Distribution by Diabetes/Prediabetes Status")
-fig4, ax4 = plt.subplots(figsize=(10, 6))
-sns.boxplot(x=target, y='Age', data=df, ax=ax4)
-ax4.set_xticklabels(['No Diabetes/Prediabetes', 'Diabetes/Prediabetes'])
-ax4.set_title("Age Distribution by Diabetes/Prediabetes Status")
-st.pyplot(fig4)
-
----------- BMI Distribution by Diabetes Status ----------
-st.subheader("📊 BMI Distribution by Diabetes/Prediabetes Status")
-fig5, ax5 = plt.subplots(figsize=(10, 6))
-sns.boxplot(x=target, y='BMI', data=df, ax=ax5)
-ax5.set_xticklabels(['No Diabetes/Prediabetes', 'Diabetes/Prediabetes'])
-ax5.set_title("BMI Distribution by Diabetes/Prediabetes Status")
-st.pyplot(fig5)
-
-
-
-
-
-
-
-
-
-
-
-
+    st.dataframe(df.head(10))
