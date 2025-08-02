@@ -137,9 +137,11 @@ age = st.sidebar.number_input("Age (18 - 80)", min_value=18, max_value=80, value
 bmi = st.sidebar.number_input("BMI (14.6 - 82.0)", min_value=14.6, max_value=82.0, value=25.0)
 total_cholesterol = st.sidebar.number_input("Total Cholesterol (80 - 400)", min_value=80.0, max_value=400.0, value=200.0)
 triglycerides = st.sidebar.number_input("Triglycerides (30 - 600)", min_value=30.0, max_value=600.0, value=150.0)
-egdr = st.sidebar.number_input("eGDR (2 - 25)", min_value=2.0, max_value=25.0, value=10.0)
+egdr = st.sidebar.number_input("eGDR (2 - 15)", min_value=2.0, max_value=25.0, value=10.0)
 
-# Categorical Inputs with New Divisions
+
+
+# Categorical Inputs with New Divisions...............((((((=
 race_ethnicity = st.sidebar.selectbox("Race/Ethnicity", race_options)
 marital_status = st.sidebar.selectbox("Marital Status", marital_status_options)
 education_level = st.sidebar.selectbox("Education Level", education_level_options)
@@ -147,13 +149,17 @@ smoked_100_cigarettes = st.sidebar.selectbox("Smoked at least 100 Cigarettes", s
 ever_drank_alcohol = st.sidebar.selectbox("Alcohol Consumption", alcohol_options)
 hyperlipidemia = st.sidebar.selectbox("Hyperlipidemia", ["Yes", "No"])
 
+
+
+
 # Create User Input DataFrame
 user_input = pd.DataFrame([{
-    'Age': age,
+    
+    'eGDR': egdr,
+    'Age': age,    
     'BMI': bmi,
     'Total_Cholesterol': total_cholesterol,
     'Triglycerides': triglycerides,
-    'eGDR': egdr,
     'Race_Ethnicity': race_ethnicity,
     'Marital_Status': marital_status,
     'Education_Level': education_level,
