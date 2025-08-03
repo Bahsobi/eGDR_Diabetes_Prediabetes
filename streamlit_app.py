@@ -39,6 +39,12 @@ st.markdown(
 st.title('🤖🩺 Machine Learning APP for Predicting Diabetes & Prediabetes Risk')
 st.info('Predict the **Diabetes/Prediabetes** status based on health data using NNet and Logistic Regression.')
 
+
+
+
+
+
+
 # ---------- Load Data ----------
 @st.cache_data
 def load_data():
@@ -111,6 +117,10 @@ odds_df = pd.DataFrame({
 # ---------- Sidebar User Input ----------
 st.sidebar.header("📝 Input Individual Data")
 
+
+
+
+#part1
 # Fixed Category Options (Based on Your Divisions)
 race_options = [
     "Mexican American", "Other Hispanic", "Non-Hispanic White",
@@ -127,8 +137,7 @@ education_level_options = [
 ]
 
 smoke_options = [
-    "Never smoker", "Former smoker", "Current smoker",
-    "Current light smoker", "Current heavy smoker"
+    "Never smoker", "Former smoker/Current smoker"
 ]
 
 alcohol_options = [
@@ -137,7 +146,7 @@ alcohol_options = [
 
 
 
-
+#part2
 # Numerical Inputs (Fixed Range like previous style)
 egdr = st.sidebar.number_input("eGDR (2 - 15)", min_value=2.0, max_value=25.0, value=10.0)
 
@@ -148,7 +157,7 @@ triglycerides = st.sidebar.number_input("Triglycerides (30 - 600)", min_value=30
 
 
 
-
+#part3
 # Categorical Inputs with New Divisions
 race_ethnicity = st.sidebar.selectbox("Race/Ethnicity", race_options)
 marital_status = st.sidebar.selectbox("Marital Status", marital_status_options)
