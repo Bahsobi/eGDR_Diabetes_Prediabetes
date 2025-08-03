@@ -46,6 +46,19 @@ st.info('Predict the **Diabetes/Prediabetes** status based on health data using 
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 # ---------- Load and Preprocess Data ----------
 @st.cache_data
 def load_data():
@@ -92,7 +105,7 @@ df = load_data()
 
 
 
-
+#################################################
 
 # ---------- Features ----------
 target = 'Diabetes_Prediabetes'
@@ -110,7 +123,7 @@ preprocessor = ColumnTransformer([
     ('num', StandardScaler(), numerical_features)
 ])
 
-# ---------- Modeling ----------
+# ---------- XGBoost Pipeline ----------
 model = Pipeline([
     ('prep', preprocessor),
     ('xgb', XGBClassifier(use_label_encoder=False, eval_metric='logloss', random_state=42))
@@ -129,7 +142,7 @@ importance_df = pd.DataFrame({
 }).sort_values(by='Importance', ascending=False)
 
 
-# ---------- Odds Ratios ----------
+# ---------- Logistic Regression for Odds Ratio ----------
 odds_pipeline = Pipeline([
     ('prep', preprocessor),
     ('logreg', LogisticRegression(max_iter=1000))
