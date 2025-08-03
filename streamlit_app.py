@@ -90,6 +90,10 @@ def load_data():
 
 df = load_data()
 
+
+
+
+
 # ---------- Features ----------
 target = 'Diabetes_Prediabetes'
 categorical_features = ['Race_Ethnicity', 'Marital_Status',
@@ -124,6 +128,7 @@ importance_df = pd.DataFrame({
     'Importance': xgb_model.feature_importances_
 }).sort_values(by='Importance', ascending=False)
 
+
 # ---------- Odds Ratios ----------
 odds_pipeline = Pipeline([
     ('prep', preprocessor),
@@ -136,13 +141,38 @@ odds_df = pd.DataFrame({
     'Odds Ratio': np.exp(log_model.coef_[0])
 }).sort_values(by='Odds Ratio', ascending=False)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+################################################################################
 # ---------- Sidebar Input ----------
 st.sidebar.header("📝 Input Data")
+
+
+
+#part1
+# Fixed Category Options (Based on Your Divisions)
 
 race_options = df['Race_Ethnicity'].dropna().unique().tolist()
 marital_status_options = df['Marital_Status'].dropna().unique().tolist()
 smoke_options = df['Smoked_100_Cigarettes'].dropna().unique().tolist()
 alcohol_options = df['Ever_Drank_Alcohol'].dropna().unique().tolist()
+
+#part2
+# Numerical Inputs (Fixed Range like previous style)
 
 egdr = st.sidebar.number_input("eGDR", min_value=2.0, max_value=25.0, value=10.0)
 age = st.sidebar.number_input("Age", min_value=18, max_value=80, value=30)
@@ -150,6 +180,8 @@ bmi = st.sidebar.number_input("BMI", min_value=14.6, max_value=82.0, value=25.0)
 total_chol = st.sidebar.number_input("Total Cholesterol", min_value=80.0, max_value=400.0, value=200.0)
 trigly = st.sidebar.number_input("Triglycerides", min_value=30.0, max_value=600.0, value=150.0)
 
+#part3
+# Categorical Inputs with New Divisions
 race = st.sidebar.selectbox("Race/Ethnicity", race_options)
 marital = st.sidebar.selectbox("Marital Status", marital_status_options)
 smoke = st.sidebar.selectbox("Smoked at least 100 Cigarettes", smoke_options)
@@ -167,6 +199,13 @@ user_input = pd.DataFrame([{
     'Ever_Drank_Alcohol': alcohol,
 }])
 
+
+
+
+
+
+#برای تغییر یا حذف یک متغیر باید هم در مپینگ و هم در فیچر تارگت اولیه و هم در ساید بار تغییر بدی
+##################################
 # ---------- Prediction ----------
 prediction = model.predict(user_input)[0]
 probability = model.predict_proba(user_input)[0][1]
