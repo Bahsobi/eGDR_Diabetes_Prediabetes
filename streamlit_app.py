@@ -137,7 +137,7 @@ education_level_options = [
 ]
 
 smoke_options = [
-    "Never smoker", "Former smoker/Current smoker"
+    "Never smoker"
 ]
 
 alcohol_options = [
