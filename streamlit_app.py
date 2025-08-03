@@ -37,7 +37,7 @@ st.markdown(
 )
 
 st.title('🤖🩺 Machine Learning APP for Predicting Diabetes & Prediabetes Risk')
-st.info('Predict the **Diabetes/Prediabetes** status based on health data using NNet and Logistic Regression.')
+st.info('Predict the **Diabetes/Prediabetes** status in Women (18–45 yrs) based on health data using NNet and Logistic Regression.')
 
 
 
