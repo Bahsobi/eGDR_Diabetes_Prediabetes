@@ -206,36 +206,46 @@ user_input = pd.DataFrame([{
 
 #برای تغییر یا حذف یک متغیر باید هم در مپینگ و هم در فیچر تارگت اولیه و هم در ساید بار تغییر بدی
 ##################################
+
+
+
+
 # ---------- Prediction ----------
 prediction = model.predict(user_input)[0]
 probability = model.predict_proba(user_input)[0][1]
 odds_value = probability / (1 - probability)
 
+# ---------- Display Result ----------
 if prediction == 1:
-    st.error(f"""⚠️ **Prediction: Diabetes/Prediabetes**
-    
-    🧮 **Probability:** {probability:.2%}  
-    🎲 **Odds:** {odds_value:.2f}""")
-else:
-    st.success(f"""✅ **Prediction: No Diabetes/Prediabetes**
-    
-    🧮 **Probability:** {probability:.2%}  
-    🎲 **Odds:** {odds_value:.2f}""")
+    st.error(f"""
+        ⚠️ **Prediction: Diabetes/Prediabetes**
 
-# ---------- Results ----------
-st.subheader("📊 Odds Ratios (Logistic Regression)")
+        🧮 **Probability:** {probability:.2%}  
+        🎲 **Odds:** {odds_value:.2f}
+    """)
+else:
+    st.success(f"""
+        ✅ **Prediction: No Diabetes/Prediabetes**
+
+        🧮 **Probability:** {probability:.2%}  
+        🎲 **Odds:** {odds_value:.2f}
+    """)
+
+# ---------- Show Tables ----------
+st.subheader("📊 Odds Ratios for Diabetes/Prediabetes (Logistic Regression)")
 st.dataframe(odds_df)
 
 st.subheader("💡 Feature Importances (XGBoost)")
 st.dataframe(importance_df)
 
+# ---------- Plot Feature Importances ----------
 st.subheader("📈 Bar Chart: Feature Importances")
 fig, ax = plt.subplots()
 sns.barplot(x='Importance', y='Feature', data=importance_df, ax=ax)
 st.pyplot(fig)
 
-# ---------- eGDR Quartile Analysis ----------
-st.subheader("📉 Odds Ratios by eGDR Quartiles")
+# ---------- Quartile Odds Ratio for eGDR ----------
+st.subheader("📉 Odds Ratios for Diabetes/Prediabetes by eGDR Quartiles")
 df_egdr = df[['eGDR', target]].copy()
 df_egdr['eGDR_quartile'] = pd.qcut(df_egdr['eGDR'], 4, labels=['Q1', 'Q2', 'Q3', 'Q4'])
 
@@ -245,22 +255,24 @@ y_q = df_egdr[target].astype(float)
 
 model_q = sm.Logit(y_q, X_q).fit(disp=False)
 ors = np.exp(model_q.params)
-ci = np.exp(model_q.conf_int())
-ci.columns = ['CI Lower', 'CI Upper']
+ci = model_q.conf_int()
+ci.columns = ['2.5%', '97.5%']
+ci = np.exp(ci)
 
 or_df = pd.DataFrame({
     'Quartile': ors.index,
     'Odds Ratio': ors.values,
-    'CI Lower': ci['CI Lower'],
-    'CI Upper': ci['CI Upper'],
+    'CI Lower': ci['2.5%'],
+    'CI Upper': ci['97.5%'],
     'p-value': model_q.pvalues
 }).query("Quartile != 'const'")
 
 st.dataframe(or_df.set_index('Quartile').style.format("{:.2f}"))
+
 fig3, ax3 = plt.subplots()
-sns.pointplot(data=or_df, x='Quartile', y='Odds Ratio', join=False, capsize=0.2)
+sns.pointplot(data=or_df, x='Quartile', y='Odds Ratio', join=False, capsize=0.2, errwidth=1.5)
 ax3.axhline(1, linestyle='--', color='gray')
-ax3.set_title("eGDR Quartiles and Odds")
+ax3.set_title("Odds Ratios for Diabetes/Prediabetes by eGDR Quartiles")
 st.pyplot(fig3)
 
 # ---------- Summary ----------
@@ -270,9 +282,9 @@ with st.expander("📋 Data Summary"):
 st.subheader("🎯 Diabetes/Prediabetes Distribution")
 fig2, ax2 = plt.subplots()
 df[target].value_counts().plot.pie(
-    autopct='%1.1f%%', labels=['No', 'Yes'], ax=ax2, colors=["#81c784", "#e57373"])
+    autopct='%1.1f%%', labels=['No Diabetes/Prediabetes', 'Diabetes/Prediabetes'], ax=ax2, colors=["#81c784", "#e57373"])
 ax2.set_ylabel("")
 st.pyplot(fig2)
 
-with st.expander("🔍 Sample Data"):
+with st.expander("🔍 Sample Data (First 10 Rows)"):
     st.dataframe(df.head(10))
