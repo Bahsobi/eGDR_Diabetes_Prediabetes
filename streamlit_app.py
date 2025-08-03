@@ -209,8 +209,8 @@ alcohol = st.sidebar.selectbox("Alcohol Consumption", alcohol_options)
 user_input = pd.DataFrame([{
     'Age': age,
     'BMI': bmi,
-    'Total_Cholesterol': total_chol,
-    'Triglycerides': trigly,
+    'Total_Cholesterol': total_cholesterol,
+    'Triglycerides': triglycerides,
     'eGDR': egdr,
     'Race_Ethnicity': race,
     'Marital_Status': marital,
