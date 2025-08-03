@@ -174,11 +174,17 @@ alcohol_options = df['Ever_Drank_Alcohol'].dropna().unique().tolist()
 #part2
 # Numerical Inputs (Fixed Range like previous style)
 
-egdr = st.sidebar.number_input("eGDR", min_value=2.0, max_value=25.0, value=10.0)
-age = st.sidebar.number_input("Age", min_value=18, max_value=80, value=30)
-bmi = st.sidebar.number_input("BMI", min_value=14.6, max_value=82.0, value=25.0)
-total_chol = st.sidebar.number_input("Total Cholesterol", min_value=80.0, max_value=400.0, value=200.0)
-trigly = st.sidebar.number_input("Triglycerides", min_value=30.0, max_value=600.0, value=150.0)
+
+
+#part2
+# Numerical Inputs (Fixed Range like previous style)
+egdr = st.sidebar.number_input("eGDR (2 - 15)", min_value=2.0, max_value=25.0, value=10.0)
+
+age = st.sidebar.number_input("Age (18 - 80)", min_value=18, max_value=80, value=30)
+bmi = st.sidebar.number_input("BMI (14.6 - 82.0)", min_value=14.6, max_value=82.0, value=25.0)
+total_cholesterol = st.sidebar.number_input("Total Cholesterol (80 - 400)", min_value=80.0, max_value=400.0, value=200.0)
+triglycerides = st.sidebar.number_input("Triglycerides (30 - 600)", min_value=30.0, max_value=600.0, value=150.0)
+
 
 #part3
 # Categorical Inputs with New Divisions
