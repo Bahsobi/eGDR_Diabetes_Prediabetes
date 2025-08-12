@@ -47,10 +47,13 @@ import pandas as pd
 def load_data():
     url = "https://github.com/Bahsobi/Diabetic-Retinopathy/raw/refs/heads/main/filtered_data_corrected.xlsx"
     df = pd.read_excel(url)
+   
+    # Handle missing values by filling or dropping
+    df = df.dropna()  # Drop rows with missing values (or use df.fillna(method='ffill') for forward fill)
+
     return df
 
 df = load_data()
-
 
 # ---------- Features ----------
 target = 'Retinopathy'
@@ -173,5 +176,3 @@ st.pyplot(fig2)
 
 with st.expander("🔍 Sample Data (First 10 Rows)"):
     st.dataframe(df.head(10)) 
-
-
