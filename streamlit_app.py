@@ -48,13 +48,19 @@ def load_data():
     url = "https://github.com/Bahsobi/Diabetic-Retinopathy/raw/refs/heads/main/filtered_data_corrected.xlsx"
     df = pd.read_excel(url)
    
-    # Handle missing values by filling or dropping
-    df = df.dropna()  # Drop rows with missing values (or use df.fillna(method='ffill') for forward fill)
-
+    # Check for NaN or infinite values and remove them
+    if df.isnull().values.any():
+        st.warning("Warning: Missing values found and dropped.")
+        df = df.dropna()  # Drop rows with missing values (or use df.fillna(method='ffill') for forward fill)
+        
+    if np.any(np.isinf(df.values)):
+        st.warning("Warning: Infinite values found and replaced with NaN.")
+        df.replace([np.inf, -np.inf], np.nan, inplace=True)
+        df = df.dropna()  # Remove rows with NaN values after replacing infinities
+        
     return df
 
 df = load_data()
-
 # ---------- Features ----------
 target = 'Retinopathy'
 categorical_features = ['Hypertension']
